@@ -61,7 +61,7 @@ exports.getBoardList = async (startPage = 1, endPage = 10) => {
     const selectedPosts = jsonBoardData.boards.slice(startIndex, endIndex).map(board => {
 
         const user = jsonUserData.users.find(user => user.id === board.userNo);
-        const comments = jsonCommentData.comments.filter(comment => comment.userNo === board.userNo);
+        const comments = jsonCommentData.comments.filter(comment => comment.boardNo === board.id);
 
         return {
             boardNo: board.id,
