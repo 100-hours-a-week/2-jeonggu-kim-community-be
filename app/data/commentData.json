@@ -1,0 +1,22 @@
+{
+  "comments": [
+    {
+      "id": 1,
+      "boardNo": 2,
+      "content": "댓글입니다...ㅇㅇ",
+      "email": "dev.jeonggu@gmail.com",
+      "commentCnt": 1,
+      "userNo": 1,
+      "date": "2024-11-07 22:59:13"
+    },
+    {
+      "id": 3,
+      "boardNo": 2,
+      "content": "테스트입니다.",
+      "email": "dev.jeonggu@gmail.com",
+      "commentCnt": 3,
+      "userNo": 1,
+      "date": "2024-11-07 23:14:21"
+    }
+  ]
+}

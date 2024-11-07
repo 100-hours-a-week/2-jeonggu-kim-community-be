@@ -6,9 +6,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const password = document.getElementById("txt_pwd").value;
         const helperText = document.getElementById("p_helper_text");
 
-        console.log(email);
-        console.log(password);
-
         try {
             const response = await fetch('/login', {
                 method: 'POST',
