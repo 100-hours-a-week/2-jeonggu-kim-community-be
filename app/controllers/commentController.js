@@ -25,7 +25,7 @@ exports.getCommentsByBoardNo = async (req, res) => {
     }
 
     try {
-        const comments = await commentModel.getCommentsByBoardNo(boardNo);
+        const comments = await commentModel.getCommentsByBoardNo(parseInt(boardNo));
         const userEmail = req.session.user ? req.session.user.email : null;
 
         // NOTE : 각 댓글에 isAuthor 필드를 추가
@@ -66,7 +66,7 @@ exports.deleteComment = async (req, res) => {
         return res.status(400).json({ message: 'commentNo is required' });
     }
     try {
-        const success = await commentModel.deleteComment(commentNo);
+        const success = await commentModel.deleteComment(parseInt(commentNo));
         if (success) {
             res.status(200).json({ message: 'success' });
         } else {
@@ -84,7 +84,7 @@ exports.addViewCount = async (req, res) => {
         return res.status(400).json({ message: 'boardNo is required' });
     }
     try {
-        const updatedPost = await boardModel.addViewCount(boardNo);
+        const updatedPost = await boardModel.addViewCount(parseInt(boardNo));
         if (updatedPost) {
             res.status(200).json({ message: 'success', data: updatedPost });
         } else {
