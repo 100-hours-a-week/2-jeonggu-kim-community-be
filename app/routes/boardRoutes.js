@@ -23,7 +23,7 @@ router.get('/:boardNo', boardController.getBoardInfo);
 router.put('/:boardNo', boardController.editBoard);
 router.delete('/:boardNo', boardController.deleteBoard);
 
-router.get('/boardInfo', boardController.getBoardInfo);
+// router.get('/boardInfo', boardController.getBoardInfo);
 router.post('/like', boardController.likeBoard);
 router.patch('/view/:boardNo', boardController.addViewCount);
 router.post('/image', upload.single('boardImage'), boardController.uploadImage);
