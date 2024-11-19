@@ -18,11 +18,6 @@ const commentRoutes = require('./app/routes/commentRoutes');
 dotenv.config();
 
 const app = express();
-<<<<<<< Updated upstream
-const PORT = process.env.PORT || 3000;
-const fs = require('fs');
-
-=======
 const PORT = process.env.PORT || 4444;
 
 // NOTE : 모든 도메인의 요청을 허용
@@ -38,7 +33,6 @@ app.use(cors({
     credentials: true // NOTE : 세션 쿠키 전송을 허용
 }));
 
->>>>>>> Stashed changes
 // NOTE : 미들웨어 설정
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -46,18 +40,13 @@ app.use(
     session({
         secret: 'your-secret-key', // NOTE : 세션 암호화를 위한 키
         resave: false, // NOTE : 세션이 수정되지 않은 경우 저장하지 않음
-<<<<<<< Updated upstream
         saveUninitialized: false, // NOTE : 초기화되지 않은 세션을 저장하지 않음
-        cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // NOTE : 1일 동안 세션 유지 (밀리초 단위)
-=======
-        saveUninitialized: false,
         cookie: { 
             secure: false, 
             httpOnly: true,
             sameSite: "none", // 크로스-사이트 요청에서 쿠키 사용 허용
             maxAge: 24 * 60 * 60 * 1000 
         } // NOTE : 1일 동안 세션 유지 (밀리초 단위)
->>>>>>> Stashed changes
     })
 );
 
@@ -96,11 +85,11 @@ app.use('/api', expressRoutes);
 app.post('/login', expressRoutes);
 app.get('/dashboard', expressRoutes);
 
-
+// NOTE : 커뮤니티 관련
 app.use('/auth', authRoutes);
-app.use('/user', userRoutes);
-app.use('/board', isAuthenticated, boardRoutes);
-app.use('/comment', isAuthenticated, commentRoutes);
+app.use('/users', userRoutes);
+app.use('/boards', isAuthenticated, boardRoutes);
+app.use('/comments', isAuthenticated, commentRoutes);
 app.use('/images', express.static(path.join(__dirname, 'app/images')));
 app.use((err, req, res, next) => {
     res.status(err.status || 500).json({ message: err.message, data: null });
@@ -114,37 +103,37 @@ app.use((err, req, res, next) => {
 app.use(express.static(path.join(__dirname, 'resources')));
 app.use('/css', express.static(path.join(__dirname, 'resources/css')));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'app/views/login.html'));
-});
-// NOTE : 회원 가입
-app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, 'app/views/register.html'));
-});
-// NOTE : 로그인
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'app/views/login.html'));
-});
-// NOTE : 게시판 리스트
-app.get('/board', (req, res) => {
-    res.sendFile(path.join(__dirname, 'app/views/board/board.html'));
-});
-//NOTE : 게시판 상세 
-app.get('/boardInfo', (req, res) => {
-    res.sendFile(path.join(__dirname, 'app/views/board/boardInfo.html'));
-});
-// NOTE : 게시판 수정
-app.get('/boardEdit', (req, res) => {
-    res.sendFile(path.join(__dirname, 'app/views/board/boardEdit.html'));
-});
-// NOTE : 게시판 추가
-app.get('/boardAdd', (req, res) => {
-    res.sendFile(path.join(__dirname, 'app/views/board/boardAdd.html'));
-});
-// NOTE : 회원 수정
-app.get('/userEdit', (req, res) => {
-    res.sendFile(path.join(__dirname, 'app/views/user/userEdit.html'));
-});
+// app.get('/', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'app/views/login.html'));
+// });
+// // NOTE : 회원 가입
+// app.get('/register', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'app/views/register.html'));
+// });
+// // NOTE : 로그인
+// app.get('/login', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'app/views/login.html'));
+// });
+// // NOTE : 게시판 리스트
+// app.get('/board', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'app/views/board/board.html'));
+// });
+// //NOTE : 게시판 상세 
+// app.get('/boardInfo', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'app/views/board/boardInfo.html'));
+// });
+// // NOTE : 게시판 수정
+// app.get('/boardEdit', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'app/views/board/boardEdit.html'));
+// });
+// // NOTE : 게시판 추가
+// app.get('/boardAdd', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'app/views/board/boardAdd.html'));
+// });
+// // NOTE : 회원 수정
+// app.get('/userEdit', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'app/views/user/userEdit.html'));
+// });
 
 // NOTE : 데이터베이스 연결
 // const db = mysql.createConnection({
