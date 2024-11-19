@@ -1,13 +1,5 @@
 const mysql = require('mysql2');
 
-// NOTE : 데이터베이스 연결
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'admin!123',
-    database: 'test'
-});
-
 // NOTE : 사용자 로그인
 exports.login = (req, res) => {
     // NOTE : req.body가 제대로 수신되는지 확인

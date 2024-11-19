@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-//const bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
 const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
@@ -18,17 +18,46 @@ const commentRoutes = require('./app/routes/commentRoutes');
 dotenv.config();
 
 const app = express();
+<<<<<<< Updated upstream
 const PORT = process.env.PORT || 3000;
 const fs = require('fs');
 
+=======
+const PORT = process.env.PORT || 4444;
+
+// NOTE : 모든 도메인의 요청을 허용
+// app.use(cors());
+
+// NOTE : 특정 도메인만 허용 (예: 'http://localhost:3000'에서 요청 허용)
+app.options('*', cors());
+
+app.use(cors({
+    /// 3000: re, 5555 : fe
+    origin: ['http://localhost:3000', 'http://localhost:5555'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // NOTE : 허용할 메서드 지정
+    credentials: true // NOTE : 세션 쿠키 전송을 허용
+}));
+
+>>>>>>> Stashed changes
 // NOTE : 미들웨어 설정
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(
     session({
         secret: 'your-secret-key', // NOTE : 세션 암호화를 위한 키
         resave: false, // NOTE : 세션이 수정되지 않은 경우 저장하지 않음
+<<<<<<< Updated upstream
         saveUninitialized: false, // NOTE : 초기화되지 않은 세션을 저장하지 않음
         cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // NOTE : 1일 동안 세션 유지 (밀리초 단위)
+=======
+        saveUninitialized: false,
+        cookie: { 
+            secure: false, 
+            httpOnly: true,
+            sameSite: "none", // 크로스-사이트 요청에서 쿠키 사용 허용
+            maxAge: 24 * 60 * 60 * 1000 
+        } // NOTE : 1일 동안 세션 유지 (밀리초 단위)
+>>>>>>> Stashed changes
     })
 );
 
@@ -118,20 +147,20 @@ app.get('/userEdit', (req, res) => {
 });
 
 // NOTE : 데이터베이스 연결
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'admin!123',
-    database: 'test'
-});
+// const db = mysql.createConnection({
+//     host: 'localhost',
+//     user: 'root',
+//     password: 'admin!123',
+//     database: 'test'
+// });
 
-db.connect(err => {
-    if (err) {
-        console.error('DB 연결 실패: ' + err.stack);
-        return;
-    }
-    console.log('DB 연결 성공!');
-});
+// db.connect(err => {
+//     if (err) {
+//         console.error('DB 연결 실패: ' + err.stack);
+//         return;
+//     }
+//     console.log('DB 연결 성공!');
+// });
 
 // NOTE : 서버시작
 app.listen(PORT, () => {

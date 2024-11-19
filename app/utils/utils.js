@@ -1,3 +1,5 @@
+const path = require('path');
+
 const formatDate = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -40,4 +42,15 @@ const saveJsonData = async (filePath, data) => {
     }
 };
 
-module.exports = { formatDate, getJsonData,  saveJsonData};
+const sendFile = (res, directory, filename) => {
+    const filePath = path.join(__dirname, '..', 'images', directory, filename);
+
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            console.error('Error sending file:', err);
+            res.status(404).send('File not found');
+        }
+    });
+};
+
+module.exports = { formatDate, getJsonData,  saveJsonData, sendFile};

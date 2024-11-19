@@ -1,10 +1,12 @@
 const fs = require('fs').promises;
 const path = require('path');
-const commentFilePath = path.join(__dirname, '../data/commentData.json');
-const boardFilePath = path.join(__dirname, '../data/boardData.json');
-const userFilePath = path.join(__dirname, '../data/userData.json');
+const pool = require('../../config/db');
+
+// const commentFilePath = path.join(__dirname, '../data/commentData.json');
+// const boardFilePath = path.join(__dirname, '../data/boardData.json');
+// const userFilePath = path.join(__dirname, '../data/userData.json');
 const { formatDate } = require('../utils/utils'); // NOTE : utils.js에서 formatDate 가져오기
-const { getJsonData, saveJsonData } = require('../utils/utils'); // NOTE : utils.js에서 formatDate 가져오기
+// const { getJsonData, saveJsonData } = require('../utils/utils'); // NOTE : utils.js에서 formatDate 가져오기
 
 // NOTE : JSON 파일에서 데이터 불러오기
 // const getJsonCommentData = async () => {
@@ -37,19 +39,20 @@ const { getJsonData, saveJsonData } = require('../utils/utils'); // NOTE : utils
 
 
 // NOTE : 댓글 추가하기
-exports.addComment = async ({ boardNo, content, email, userId}) => {
+/*
+exports.addComment = async ({ board_id, content, email, userId}) => {
     const jsonCommentData = await getJsonData(commentFilePath, "comments");
     const jsonUserData = await getJsonData(userFilePath, "users");
     
     const maxId = jsonCommentData.comments.reduce((max, comment) => Math.max(max, comment.id), 0);
     const newCommentId = maxId + 1;
-    const commentCnt = jsonCommentData.comments.filter(comment => comment.boardNo === boardNo);
+    const commentCnt = jsonCommentData.comments.filter(comment => comment.board_id === board_id);
     const newComment = {
         id: newCommentId,
-        boardNo,
+        board_id,
         content,
         email,
-        userNo: userId,
+        user_id: userId,
         commentCnt: commentCnt.length + 1,
         date: formatDate(new Date()),
     };
@@ -61,32 +64,81 @@ exports.addComment = async ({ boardNo, content, email, userId}) => {
 
     return {
         ...newComment,
-        profileFile: user ? user.profile_url : null // 사용자가 없을 경우 null 처리
+        profile_url: user ? user.profile_url : null // 사용자가 없을 경우 null 처리
     };
+};*/
+exports.addComment = async ({ board_id, content, user_id }) => {
+    try {
+        const now =  new Date();
+        const [result] = await pool.promise().query(
+            `INSERT INTO innodb.comments (board_id, content, reg_id, reg_dt)
+             VALUES (?, ?, ?, ?)`,
+            [board_id, content, user_id, now]
+        );
+
+        return {
+            comment_id: result.insertId
+        ,   board_id: board_id
+        ,   content
+        ,   user_id: user_id
+        ,   date: now
+        };
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        throw new Error('Failed to add comment');
+    }
 };
 
 // NOTE : 특정 게시글의 댓글 가져오기
-exports.getCommentsByBoardNo = async (boardNo) => {
+/*
+exports.getCommentsByBoardId = async (board_id) => {
     const jsonCommentData = await getJsonData(commentFilePath, "comments");
     const jsonUserData = await getJsonData(userFilePath, "users");
 
     // NOTE : 해당 게시글의 댓글 필터링 및 사용자 정보 추가
     const commentsWithProfile = jsonCommentData.comments
-        .filter(comment => comment.boardNo === boardNo)
+        .filter(comment => comment.board_id === board_id)
         .map(comment => {
-            // NOTE : 댓글의 userNo에 해당하는 사용자 찾기
-            const user = jsonUserData.users.find(user => user.id === comment.userNo);
-            // NOTE : profileFile 값 추가
+            // NOTE : 댓글의 user_id에 해당하는 사용자 찾기
+            const user = jsonUserData.users.find(user => user.id === comment.user_id);
+            // NOTE : profile_url 값 추가
             return {
                 ...comment,
-                profileFile: user ? user.profile_url : null // 사용자가 없을 경우 null 처리
+                profile_url: user ? user.profile_url : null // 사용자가 없을 경우 null 처리
             };
         });
 
     return commentsWithProfile;
+};*/
+exports.getCommentsByBoardId = async (board_id, user_id) => {
+    try {
+        const [comments] = await pool.promise().query(
+            `SELECT
+                b.id AS board_id
+            ,   u.profile_url
+            ,   u.nickname
+            ,   c.id AS comment_id
+            ,   c.content
+            ,   c.reg_id
+            ,   c.reg_dt
+            ,   CASE WHEN c.reg_id = ? THEN TRUE 
+                    ELSE FALSE 
+                END AS isAuthor
+            FROM innodb.boards b
+            INNER JOIN innodb.comments c ON b.id = c.board_id
+            INNER JOIN innodb.users u ON c.reg_id = u.id
+            WHERE b.id = ?`,
+            [user_id, board_id]
+        );
+        return comments;
+    } catch (error) {
+        console.error('Error fetching comments:', error);
+        throw new Error('Failed to fetch comments');
+    }
 };
 
 // NOTE : 특정 댓글 삭제하기
+/*
 exports.deleteComment = async (commentNo) => {
     const jsonData = await getJsonData(commentFilePath, "comments");
     const initialLength = jsonData.comments.length;
@@ -98,8 +150,22 @@ exports.deleteComment = async (commentNo) => {
     }
     return false;
 };
+*/
+exports.deleteComment = async (commentNo) => {
+    try {
+        const [result] = await pool.promise().query(
+            `DELETE FROM innodb.comments WHERE id = ?`,
+            [commentNo]
+        );
+        return result.affectedRows > 0; // 삭제 성공 여부 반환
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        throw new Error('Failed to delete comment');
+    }
+};
 
 // NOTE : 특정 댓글 수정하기
+/*
 exports.updateComment = async (commentNo, newContent) => {
     const jsonData = await getJsonData(commentFilePath, "comments");
     const commentIndex = jsonData.comments.findIndex(comment => comment.id === commentNo);
@@ -110,4 +176,19 @@ exports.updateComment = async (commentNo, newContent) => {
         return true;
     }
     return false;
+};
+*/
+exports.updateComment = async (commentNo, newContent) => {
+    try {
+        const [result] = await pool.promise().query(
+            `UPDATE innodb.comments
+             SET content = ?, chg_dt = NOW()
+             WHERE id = ?`,
+            [newContent, commentNo]
+        );
+        return result.affectedRows > 0; // 수정 성공 여부 반환
+    } catch (error) {
+        console.error('Error updating comment:', error);
+        throw new Error('Failed to update comment');
+    }
 };
