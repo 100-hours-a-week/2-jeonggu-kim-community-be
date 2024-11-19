@@ -1,39 +1,7 @@
 const userModel = require('../models/userModel');
-
-// NOTE : 회원가입 처리 함수 -> DB 연결
-/*
-exports.register = async (req, res) => {
-    const { email, password, nickname, profile_url } = req.body;
-
-    try {
-        // NOTE : 사용자 추가
-        const result = await userModel.addUser(email, password, nickname, profile_url || null);
-        
-        res.status(200).json({ message: 'success', data: null });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'server error', data: null });
-    }
-};
-
-exports.updateUser = async (req, res) => {
-    const { email, password, nickname, profile_url } = req.body;
-    try {
-        // NOTE : 데이터베이스에 사용자 추가
-        const result = await userModel.addUser(
-            email || null,
-            password || null,
-            nickname || null,
-            profile_url || null
-        );
-        res.status(200).json({ message: 'success', data: result });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'server error', data: null });
-    }
-};
-
-*/
+const utils = require('../utils/utils');
+const path = require('path');
+const fs = require('fs');
 
 // NOTE : key value로 정보 가져오기
 exports.check = async (req, res) => {
@@ -52,10 +20,19 @@ exports.check = async (req, res) => {
 // NOTE : 정보 가져오기
 exports.getUserInfo = async (req, res) => {
     try {
-        const result = await userModel.getUser(
-            "id", req.session.user.id
-        );
-        res.status(200).json({ message: 'success', data: result });
+        // 1. 데이터베이스에서 유저 정보 가져오기
+        const result = await userModel.getUser("id", req.user.id);
+
+        // 2. 유저 데이터가 없으면 에러 반환
+        if (!result) {
+            return res.status(404).json({ message: 'User not found', data: null });
+        }
+
+        res.status(200).json({
+            message: 'success',
+            data: result,
+        });
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'server error', data: null });
@@ -92,7 +69,7 @@ exports.updateUser = async (req, res) => {
         return res.status(400).json({ message: 'Nickname or password is required' });
     }
 
-    const userId = req.session.user.id;
+    const userId = req.user.id;
     if (!userId) {
         return res.status(401).json({ message: 'Unauthorized: User ID not found in session' });
     }
@@ -105,7 +82,7 @@ exports.updateUser = async (req, res) => {
 
         const updatedUser = await userModel.updateUser(userId, updateData);
 
-        if (nickname) req.session.user.nickname = updatedUser.nickname;
+        if (nickname) req.user.nickname = updatedUser.nickname;
 
         res.status(200).json({ message: 'success', data: updatedUser });
     } catch (error) {
@@ -119,11 +96,15 @@ exports.updateUser = async (req, res) => {
 };
 
 exports.deleteUser = async (req, res) => {
-    const userNo = req.session.user.id;
-    const email = req.session.user.email; 
+    const user_id = req.user.id;
+    const email = req.user.email; 
+    let refreshTokens = []; // NOTE : 리프레시 토큰 저장소
     try {
-        const deleteUser = await userModel.deleteUser(userNo, email);
-        req.session.destroy(); // NOTE : 세션 삭제
+        const refreshToken = req.body.refreshToken;
+        const deleteUser = await userModel.deleteUser(user_id, email);
+        if(deleteUser){
+            refreshTokens = refreshTokens.filter(token => token !== refreshToken);
+        }
         res.status(200).json({ message: '회원이 성공적으로 삭제되었습니다.' });
     } catch (error) {
         console.error('회원 삭제 중 오류:', error);
@@ -140,4 +121,28 @@ exports.uploadImage = (req, res) => {
     // NOTE : 파일이 저장된 경로를 응답으로 반환
     const filePath = `../images/profile/${req.file.filename}`;
     res.json({ message: '파일 업로드 성공', filePath: filePath });
+};
+
+// NOTE : 파일 제공 처리 함수
+exports.loadImage = (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, '..', 'images', 'profile', filename);
+    const defaultFilePath = path.join(__dirname, '..', 'images', 'profile', 'default.png'); // NOTE : 기본 이미지 경로
+
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+        if (err) {
+            console.warn('요청된 파일이 없으므로 기본 이미지를 반환합니다.');
+            return res.sendFile(defaultFilePath);
+        }
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); 
+        res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5555'); // NOTE : 클라이언트 도메인
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                console.error('파일 전송 중 오류 발생:', err);
+                res.status(500).json({ message: '파일 전송 중 오류 발생' });
+            }
+        });
+    });
 };
