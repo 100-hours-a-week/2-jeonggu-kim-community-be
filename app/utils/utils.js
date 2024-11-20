@@ -48,7 +48,7 @@ const sendFile = (res, directory, filename) => {
     res.sendFile(filePath, (err) => {
         if (err) {
             console.error('Error sending file:', err);
-            res.status(404).send('File not found');
+            return res.status(404).send('File not found');
         }
     });
 };

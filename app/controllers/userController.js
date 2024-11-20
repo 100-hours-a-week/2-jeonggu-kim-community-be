@@ -1,5 +1,7 @@
 const userModel = require('../models/userModel');
-const utils = require('../utils/utils');
+// const utils = require('../utils/utils');
+const { generateToken } = require('../utils/jwt');
+
 const path = require('path');
 const fs = require('fs');
 
@@ -10,35 +12,34 @@ exports.check = async (req, res) => {
         const result = await userModel.getUser(
             key, value
         );
-        res.status(200).json({ message: 'success', data: result });
+        return (200).json({ message: 'success', data: result });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'server error', data: null });
+        return res.status(500).json({ message: 'server error', data: null });
     }
 };
 
 // NOTE : 정보 가져오기
 exports.getUserInfo = async (req, res) => {
     try {
-        // 1. 데이터베이스에서 유저 정보 가져오기
-        const result = await userModel.getUser("id", req.user.id);
+        const result = await userModel.getUser("user_id", req.user?.user_id);
 
-        // 2. 유저 데이터가 없으면 에러 반환
         if (!result) {
             return res.status(404).json({ message: 'User not found', data: null });
         }
 
-        res.status(200).json({
+        return res.status(200).json({
             message: 'success',
             data: result,
         });
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'server error', data: null });
+        return res.status(500).json({ message: 'server error', data: null });
     }
 };
 
+// NOTE: 회원 추가
 exports.addUser = async (req, res) => {
     const { email, password, nickname, profile_url } = req.body;
     
@@ -54,23 +55,25 @@ exports.addUser = async (req, res) => {
             nickname || null,
             profile_url || null
         );
-        res.status(200).json({ message: 'success', data: result });
+        return res.status(200).json({ message: 'success', data: result });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'server error', data: null });
+        return res.status(500).json({ message: 'server error', data: null });
     }
 };
 
+// NOTE: 회원 수정
 exports.updateUser = async (req, res) => {
     const { nickname, password, profile_url } = req.body;
+    const email = req.user?.email;
 
     // NOTE : 닉네임과 비밀번호가 모두 없는 경우 에러 반환
     if (!nickname && !password) {
         return res.status(400).json({ message: 'Nickname or password is required' });
     }
 
-    const userId = req.user.id;
-    if (!userId) {
+    const user_id = req.user?.user_id;
+    if (!user_id) {
         return res.status(401).json({ message: 'Unauthorized: User ID not found in session' });
     }
 
@@ -80,23 +83,35 @@ exports.updateUser = async (req, res) => {
         if (profile_url) updateData.profile_url = profile_url; 
         if (password) updateData.password = password; 
 
-        const updatedUser = await userModel.updateUser(userId, updateData);
+        const updatedUser = await userModel.updateUser(user_id, updateData);
 
-        if (nickname) req.user.nickname = updatedUser.nickname;
+        if(nickname){
+            const token = generateToken({
+                user_id: user_id,
+                nickname: nickname,
+                email: email,
+                profile_url: profile_url
+            });
 
-        res.status(200).json({ message: 'success', data: updatedUser });
+            return res.status(200).json({
+                message: 'success',
+                data: { token: token },
+            });
+        }
+        return res.status(200).json({ message: 'success' });
     } catch (error) {
         console.error('Error updating profile:', error);
         if (error.message === 'User not found') {
-            res.status(404).json({ message: 'User not found' });
+            return res.status(404).json({ message: 'User not found' });
         } else {
-            res.status(500).json({ message: 'server error' });
+            return res.status(500).json({ message: 'server error' });
         }
     }
 };
 
+// NOTE: 회원 삭제
 exports.deleteUser = async (req, res) => {
-    const user_id = req.user.id;
+    const user_id = req.user?.user_id;
     const email = req.user.email; 
     let refreshTokens = []; // NOTE : 리프레시 토큰 저장소
     try {
@@ -105,10 +120,10 @@ exports.deleteUser = async (req, res) => {
         if(deleteUser){
             refreshTokens = refreshTokens.filter(token => token !== refreshToken);
         }
-        res.status(200).json({ message: '회원이 성공적으로 삭제되었습니다.' });
+        return res.status(200).json({ message: '회원이 성공적으로 삭제되었습니다.' });
     } catch (error) {
         console.error('회원 삭제 중 오류:', error);
-        res.status(500).json({ message: '회원 삭제 중 오류가 발생했습니다.' });
+        return res.status(500).json({ message: '회원 삭제 중 오류가 발생했습니다.' });
     }
 };
 
@@ -141,7 +156,7 @@ exports.loadImage = (req, res) => {
         res.sendFile(filePath, (err) => {
             if (err) {
                 console.error('파일 전송 중 오류 발생:', err);
-                res.status(500).json({ message: '파일 전송 중 오류 발생' });
+                return res.status(500).json({ message: '파일 전송 중 오류 발생' });
             }
         });
     });
