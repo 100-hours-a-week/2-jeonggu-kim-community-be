@@ -1,6 +1,9 @@
 const authModel = require('../models/authModel');
+const { generateToken } = require('../utils/jwt');
+
 const jwt = require("jsonwebtoken");
 
+// NOTE: 로그인
 exports.login = async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -12,21 +15,19 @@ exports.login = async (req, res) => {
 
         if (result.success) {
             // NOTE : JWT 생성
-            const token = jwt.sign({ 
-                    id: result.id
-                ,   nickname: result.nickname
-                ,   email: result.email 
-                ,   profile_url: result.profile_url
-                }, // NOTE : 페이로드
-                "your_secret_key", // NOTE : 비밀 키
-                { expiresIn: "1h" } // NOTE : 만료 시간
-            );
+            const token = generateToken({
+                user_id: result.user_id,
+                nickname: result.nickname,
+                email: result.email,
+                profile_url: result.profile_url
+            });
+            
             // NOTE : 클라이언트로 토큰과 사용자 데이터를 반환
             return res.status(200).json({
                 message: 'success',
                 data: {
                     success: result.success
-                ,   id: result.id
+                ,   user_id: result.user_id
                 ,   email: result.email
                 ,   nickname: result.nickname
                 ,   profile_url: result.profile_url
@@ -42,16 +43,3 @@ exports.login = async (req, res) => {
         return res.status(500).json({ message: 'Server error' });
     }
 };
-
-    // NOTE : 로그인 성공 시 세션에 사용자 정보 저장
-    // req.session.user = {
-    //     id: result.id,
-    //     email: result.email
-    // };
-    // req.session.save((err) => {
-    //     if (err) {
-    //         console.error('세션 저장 오류:', err);
-    //     } else {
-    //         console.log('세션 저장 완료:', req.session);
-    //     }
-    // });
