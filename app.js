@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const mysql = require('mysql2');
+const cors = require('cors');
 const expressRoutes = require('./app/routes/expressRoutes/expressRoutes');
 
 // NOTE : authRoutes와 isAuthenticated 임포트
